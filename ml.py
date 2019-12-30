@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+### todo
+### import more models. 
+
+
 ### use gradient boosting. 
 ### notice, importance always come from full model using all data. (CV is irrelevant here) 
 
