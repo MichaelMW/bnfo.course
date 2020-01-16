@@ -18,6 +18,7 @@ parser.add_argument('-p', dest='ncpu', default=-1 , help='number of CPU process.
 parser.add_argument('-I', dest='impFile', default="impFile.tsv" , help='output importance file. Default: impFile.tsv')
 parser.add_argument('-P', dest='predFile', default="predFile.tsv" , help='output Y-pred file. Default: predFile.tsv')
 parser.add_argument('-L', dest='lasso', default=False , help='use lasso, default to False; otherwise use a number for alpha: 0 to 1; 0 for an ordinary least square, 1 for conanical L1 lasso. Default: False')
+parser.add_argument('-T', dest='transpose', action='store_true', default=False, help='transpose the data from using samples on the columns (and features/label on the rows) to samples on the rows(and features/label on the columns), Default=False')
 args = parser.parse_args()
 
 ## check args
@@ -30,6 +31,7 @@ mode = args.mode
 impFile = args.impFile
 predFile = args.predFile
 lasso = float(args.lasso) if args.lasso else False
+transpose = args.transpose
 
 ## default values
 sep = "\t" # used to parse the inFile
@@ -49,6 +51,8 @@ random_state = 0 # random state
 ## read inFile
 import pandas as pd
 df = pd.read_csv(inFile, header = header, sep = sep, index_col = index_col)
+if transpose:
+	df = df.transpose()
 y = df[label]
 fts = list(df.columns)
 fts.remove(label)
