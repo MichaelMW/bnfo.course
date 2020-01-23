@@ -19,6 +19,6 @@
 ./cluster.py -i input3.tsv -l survival -k 4 -o k4.pdf
 # use tsne
 ./cluster.py -i input3.tsv -l survival -m tsne -k 4 -o k4.tsne.pdf
-# use random data as control
-./cluster.py -i input4.tsv -l survival -m tsne -k 4 -o k4.tsne.random.pdf
+# kmean #cluster = 4, with annotation
+./cluster.py -i input3.tsv -l survival -k 4 -o k4.anno.pdf -a
 
