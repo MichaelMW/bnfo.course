@@ -24,6 +24,7 @@ parser.add_argument('-p', dest='perplexity', default=30, help='perplexity for ts
 parser.add_argument('-k', dest='n_clusters', default=False, help='number of clusters for kmeans; Default:False, using label for label')
 parser.add_argument('-t', dest='outCluster', default='outCluster.tsv', help='output clusters; only works with -k. Default:outCluster.tsv')
 parser.add_argument('-o', dest='outPlot', default = 'outPlot.pdf', help='output plot file; Default:outPlot.pdf')
+parser.add_argument('-d', dest='hide_legend', action='store_true', default=False, help='hide legend; Default:False')
 parser.add_argument('-T', dest='transpose', action='store_true', default=False, help='transpose the data from using samples on the columns (and features/label on the rows) to samples on the rows(and features/label on the columns), Default=False')
 args = parser.parse_args()
 
@@ -36,6 +37,7 @@ n_clusters = int(args.n_clusters) if args.n_clusters else False  # int or False
 outCluster = args.outCluster
 outPlot = args.outPlot
 transpose = args.transpose
+hide_legend = args.hide_legend
 
 #### debug input parameters ####
 #inFile = "input3.tsv"
@@ -94,5 +96,6 @@ for y_set in y_sets:
 	px, py = zip(*y_rep[indice])
 	plt.scatter(px, py, label = kw + str(y_set))
 
-plt.legend()
+if not hide_legend:
+	plt.legend()
 plt.savefig(outPlot)
