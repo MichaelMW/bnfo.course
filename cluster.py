@@ -25,6 +25,7 @@ parser.add_argument('-k', dest='n_clusters', default=False, help='number of clus
 parser.add_argument('-t', dest='outCluster', default='outCluster.tsv', help='output clusters; only works with -k. Default:outCluster.tsv')
 parser.add_argument('-o', dest='outPlot', default = 'outPlot.pdf', help='output plot file; Default:outPlot.pdf')
 parser.add_argument('-d', dest='hide_legend', action='store_true', default=False, help='hide legend; Default:False')
+parser.add_argument('-a', dest='annotation', action='store_true', default=False, help='add annotation; Default:False')
 parser.add_argument('-T', dest='transpose', action='store_true', default=False, help='transpose the data from using samples on the columns (and features/label on the rows) to samples on the rows(and features/label on the columns), Default=False')
 args = parser.parse_args()
 
@@ -38,6 +39,7 @@ outCluster = args.outCluster
 outPlot = args.outPlot
 transpose = args.transpose
 hide_legend = args.hide_legend
+annotation = args.annotation
 
 #### debug input parameters ####
 #inFile = "input3.tsv"
@@ -57,10 +59,9 @@ n_components = 2 # 2D output
 
 #### read input file
 df = pd.read_csv(inFile, header = header, sep = sep, index_col = index_col)
-fts = list(df.columns)
-
 if transpose:
 	df = df.transpose()
+fts = list(df.columns)
 if label:
 	y = df[label]
 	fts.remove(label)
@@ -90,12 +91,22 @@ else:
 	kw = "label: "
 
 ## plot
+# main
 y_sets = set(y)
 for y_set in y_sets:
 	indice = [index for index, eachY in enumerate(y) if eachY==y_set]
 	px, py = zip(*y_rep[indice])
 	plt.scatter(px, py, label = kw + str(y_set))
 
+# legend
 if not hide_legend:
 	plt.legend()
+
+# annotation
+if annotation:
+	px, py = zip(*y_rep)
+	for i, rname in enumerate(rnames):
+		plt.annotate(rname, (px[i], py[i]))
+
+# savefig	
 plt.savefig(outPlot)
