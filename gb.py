@@ -6,6 +6,8 @@
 
 import numpy as np
 
+
+
 ## import args
 import argparse
 parser = argparse.ArgumentParser()
@@ -17,6 +19,7 @@ parser.add_argument('-t', dest='ntree', default=100 , help='number of trees. Def
 parser.add_argument('-p', dest='ncpu', default=-1 , help='number of CPU process. Default:1')
 parser.add_argument('-I', dest='impFile', default="impFile.tsv" , help='output importance file. Default: impFile.tsv')
 parser.add_argument('-P', dest='predFile', default="predFile.tsv" , help='output Y-pred file. Default: predFile.tsv')
+parser.add_argument('-O', dest='plotFile', default="plotFile" , help='header name for the output AUC plot, only works for classification and when cvFold > 0! eg. -m classification -n 5 -O test. Default: plotFile')
 parser.add_argument('-L', dest='lasso', default=False , help='use lasso, default to False; otherwise use a number for alpha: 0 to 1; 0 for an ordinary least square, 1 for conanical L1 lasso. Default: False')
 parser.add_argument('-T', dest='transpose', action='store_true', default=False, help='transpose the data from using samples on the columns (and features/label on the rows) to samples on the rows(and features/label on the columns), Default=False')
 args = parser.parse_args()
@@ -30,6 +33,7 @@ cvFold = int(args.cvFold)
 mode = args.mode
 impFile = args.impFile
 predFile = args.predFile
+plotFile = args.plotFile
 lasso = float(args.lasso) if args.lasso else False
 transpose = args.transpose
 
@@ -67,7 +71,7 @@ else:
 
 ## performance eval
 from numpy import mean, std
-from sklearn.metrics import roc_auc_score, average_precision_score, explained_variance_score, r2_score
+from sklearn.metrics import roc_auc_score, average_precision_score, explained_variance_score, r2_score, roc_curve,  precision_recall_curve
 from scipy.stats import spearmanr
 
 ## lasso
@@ -82,15 +86,19 @@ def go_lasso(X, y, alpha):
 
 ## main
 
+## for plotting
+import matplotlib.pyplot as plt
+
 ## has CV
 if cvFold > 0:
 	from sklearn.model_selection import KFold
 	kf = KFold(n_splits=cvFold, random_state=random_state, shuffle=True)
 	kf.get_n_splits(X)
-
 	s1s, s2s = [], []
 	preds, Ys = [], []
+	fold = 0
 	for train_index, test_index in kf.split(X):
+		fold += 1
 		X_train, X_test = X.iloc[train_index,:], X.iloc[test_index,:]
 		y_train, y_test = y.iloc[train_index], y.iloc[test_index]
 		if lasso:
@@ -103,22 +111,48 @@ if cvFold > 0:
 			predp = model.predict_proba(X_test)[:,1]
 			auROC = roc_auc_score(y_test, predp)
 			auPRC = average_precision_score(y_test, predp)
+			## for plot
+			# ROC
+			plt.figure(1)
+			fpr, tpr, _ = roc_curve(y_test, predp)
+			plt.plot(fpr, tpr, label= "fold :" + str(fold))
+			# PRC
+			plt.figure(2)
+			precision, recall, _ = precision_recall_curve(y_test, predp)
+			plt.plot(recall, precision,	label = "fold :" + str(fold))
+			## for score
 			print("ROC\t{0:.3f}\tPRC\t{1:.3f}".format(auROC, auPRC))
 			s1s.append(auROC)
 			s2s.append(auPRC)
 		else:
-			#spcor, pval = spearmanr(y_test, pred)
 			r2 = r2_score(y_test, pred)
 			varExp = explained_variance_score(y_test, pred)
-			#print("spearman\t{}\tvarExp\t{}".format(spcor, varExp))
 			print("r2\t{}\tvarExp\t{}".format(r2, varExp))
-			#s1s.append(spcor)
 			s1s.append(r2)
 			s2s.append(varExp)
 		# for predFile
 		preds += list(pred)
 		Ys += list(y_test)
 	print("{}\t{}\t{}\t{}".format(round(mean(s1s),3), round(std(s1s),3), round(mean(s2s),3), round(std(s2s),3)))
+
+	if mode in ["classification", "c", "C"]:
+		## plotting: ROC curve
+		plt.figure(1)
+		plt.xlim([-0.05,1.05])
+		plt.ylim([-0.05,1.05])
+		plt.xlabel('False Positive Rate')
+		plt.ylabel('True Positive Rate')
+		plt.legend()
+		plt.savefig(plotFile + ".ROC.pdf")
+		## plotting: PRC curve
+		plt.figure(2)
+		plt.xlim([-0.05,1.05])
+		plt.ylim([-0.05,1.05])
+		plt.xlabel('Precision')
+		plt.ylabel('Recall')
+		plt.legend()
+		plt.savefig(plotFile + ".PRC.pdf")
+
 
 ## no CV; regardless, full model is computed, imp should come from here. 
 if lasso:
@@ -142,7 +176,7 @@ with open(impFile, "w") as f:
 
 ## otherwise print full model performance.
 if cvFold <= 0:
-	if mode == "classification" or "c" or "C":
+	if mode in ["classification", "c", "C"]:
 		predp = modelFull.predict_proba(X)[:,1]
 		auROC = roc_auc_score(y, predp)
 		auPRC = average_precision_score(y, predp)

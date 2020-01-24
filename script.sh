@@ -2,12 +2,14 @@
 
 #### examples 
 
-
 ### supervised learning
 ./gb.py -i input1.tsv -l price -m regression # simple example, play with input
 ./gb.py -i input2.tsv -l survival -m regression # regresssion
-./gb.py -i input3.tsv -l survival -m classification   # classification, real data
-./gb.py -i input4.tsv -l survival -m classification   # classification, randome data as control
+./gb.py -i input3.tsv -l survival -m classification  # classification, real data
+./gb.py -i input4.tsv -l survival -m classification  # classification, randome data as control
+## with cross validation and AUC plots
+./gb.py -i input3.tsv -l survival -m classification -n 5 -O real_AUC  # classification, real data
+./gb.py -i input4.tsv -l survival -m classification -n 5 -O random_AUC  # classification, randome data as control
 
 ### unsupervised learning
 ## using input survival as label
